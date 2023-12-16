@@ -54,5 +54,22 @@ val commentData = listOf(
                 resourceType = "file"
             )
         )
+    ),
+    EntityTestParam.build(
+        """{
+            "content": "Need one bottle of milk",
+            "id": "2992679863",
+            "posted_at": "2016-09-22T07:00:00.000000Z",
+            "project_id": "2995104330",
+            "task_id": null
+        }""".trimIndent(),
+        TodoistComment(
+            content = "Need one bottle of milk",
+            id = "2992679863",
+            postedAt = "2016-09-22T07:00:00.000000Z",
+            projectId = "2995104330",
+            taskId = null,
+            attachment = null
+        )
     )
 )

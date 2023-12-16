@@ -20,13 +20,33 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    alias(libs.plugins.jetbrains.kotlin.jvm)
-}
+package net.opatry.todoist.entity
 
-dependencies {
-    api(libs.bundles.ktor)
-    implementation(libs.gson)
+import com.google.gson.annotations.SerializedName
 
-    testImplementation(libs.junit4)
-}
+/**
+ * Represents a Todoist label.
+ *
+ * @property id Label ID.
+ * @property order Number used by clients to sort list of labels.
+ * @property name Label name.
+ * @property color The color of the project icon. Refer to the `name` column in the [Colors](https://developer.todoist.com/guides/#colors) guide for more info.
+ * @property isFavorite Whether the label is a favorite.
+ */
+data class TodoistLabel(
+
+    @SerializedName("id")
+    override val id: String,
+
+    @SerializedName("order")
+    override val order: Int,
+
+    @SerializedName("name")
+    val name: String,
+
+    @SerializedName("color")
+    val color: String,
+
+    @SerializedName("is_favorite")
+    val isFavorite: Boolean,
+) : OrderedEntity

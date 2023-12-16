@@ -20,13 +20,6 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    alias(libs.plugins.jetbrains.kotlin.jvm)
-}
+package net.opatry.todoist.entity
 
-dependencies {
-    api(libs.bundles.ktor)
-    implementation(libs.gson)
-
-    testImplementation(libs.junit4)
-}
+object Todoist

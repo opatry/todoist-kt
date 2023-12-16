@@ -20,13 +20,17 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    alias(libs.plugins.jetbrains.kotlin.jvm)
-}
+package net.opatry.todoist.entity
 
-dependencies {
-    api(libs.bundles.ktor)
-    implementation(libs.gson)
+import com.google.gson.annotations.SerializedName
 
-    testImplementation(libs.junit4)
-}
+/**
+ * Represents a Todoist remove shared label request.
+ *
+ * @property name The name of the label to remove.
+ */
+data class TodoistSharedLabelRemovalRequest(
+
+    @SerializedName("name")
+    val name: String,
+)

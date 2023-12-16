@@ -20,13 +20,23 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    alias(libs.plugins.jetbrains.kotlin.jvm)
-}
+package net.opatry.todoist.entity
 
-dependencies {
-    api(libs.bundles.ktor)
-    implementation(libs.gson)
+import com.google.gson.annotations.SerializedName
 
-    testImplementation(libs.junit4)
-}
+/**
+ * @property id
+ * @property name
+ * @property email
+ */
+data class TodoistCollaborator(
+
+    @SerializedName("id")
+    val id: String,
+
+    @SerializedName("name")
+    val name: String,
+
+    @SerializedName("email")
+    val email: String,
+)

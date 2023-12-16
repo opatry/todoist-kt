@@ -20,13 +20,16 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    alias(libs.plugins.jetbrains.kotlin.jvm)
+package net.opatry.todoist.entity
+
+interface TodoistEntity {
+    val id: String
 }
 
-dependencies {
-    api(libs.bundles.ktor)
-    implementation(libs.gson)
+interface OrderedEntity : TodoistEntity {
+    val order: Int
+}
 
-    testImplementation(libs.junit4)
+interface EntityInHierarchy : OrderedEntity {
+    val parentId: String?
 }

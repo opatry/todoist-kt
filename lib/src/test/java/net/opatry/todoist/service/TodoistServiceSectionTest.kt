@@ -20,7 +20,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.opatry.todoist.entity
+package net.opatry.todoist.service
 
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -32,8 +32,10 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.runBlocking
-import net.opatry.todoist.entity.data.EntityTestParam
-import net.opatry.todoist.entity.data.commentData
+import net.opatry.todoist.entity.TodoistSection
+import net.opatry.todoist.entity.TodoistSectionCreationRequest
+import net.opatry.todoist.entity.TodoistSectionUpdateRequest
+import net.opatry.todoist.entity.data.sectionData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
@@ -41,58 +43,33 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-class TodoistServiceCommentTest {
+class TodoistServiceSectionTest {
 
     @Test
-    fun `TodoistService getProjectComments`() {
-        val projectComments = commentData.filterNot { it.jsonPayload.contains("\"project_id\": null") }
-        val commentsPayload = projectComments.map(EntityTestParam::jsonPayload).joinToString(",", "[", "]")
+    fun `TodoistService getSections`() {
+        val testData = sectionData.first()
 
         var request: HttpRequestData? = null
         val mockEngine = MockEngine {
             request = it
             respond(
-                content = ByteReadChannel(commentsPayload),
+                content = ByteReadChannel("[${testData.jsonPayload}]"),
                 status = HttpStatusCode.OK,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
         }
 
         usingTodoistService(mockEngine) { todoService ->
-            val comments = todoService.getProjectComments("42")
-            assertEquals("/v2/comments", request?.url?.encodedPath)
+            val sections = todoService.getSections("42")
+            assertEquals("/v2/sections", request?.url?.encodedPath)
             assertEquals("project_id=42", request?.url?.encodedQuery)
             assertEquals(HttpMethod.Get, request?.method)
-            assertEquals(projectComments.map(EntityTestParam::expectedEntity), comments)
+            assertEquals(listOf(testData.expectedEntity), sections)
         }
     }
 
     @Test
-    fun `TodoistService getTaskComments`() {
-        val taskComments = commentData.filterNot { it.jsonPayload.contains("\"task_id\": null") }
-        val commentsPayload = taskComments.map(EntityTestParam::jsonPayload).joinToString(",", "[", "]")
-
-        var request: HttpRequestData? = null
-        val mockEngine = MockEngine {
-            request = it
-            respond(
-                content = ByteReadChannel(commentsPayload),
-                status = HttpStatusCode.OK,
-                headers = headersOf(HttpHeaders.ContentType, "application/json")
-            )
-        }
-
-        usingTodoistService(mockEngine) { todoService ->
-            val comments = todoService.getTaskComments("666")
-            assertEquals("/v2/comments", request?.url?.encodedPath)
-            assertEquals("task_id=666", request?.url?.encodedQuery)
-            assertEquals(HttpMethod.Get, request?.method)
-            assertEquals(taskComments.map(EntityTestParam::expectedEntity), comments)
-        }
-    }
-
-    @Test
-    fun `TodoistService getComments failure`() {
+    fun `TodoistService getSections failure`() {
         val mockEngine = MockEngine {
             respond(
                 content = ByteReadChannel(""),
@@ -104,25 +81,24 @@ class TodoistServiceCommentTest {
         usingTodoistService(mockEngine) { todoService ->
             assertThrows(ClientRequestException::class.java) {
                 runBlocking {
-                    todoService.getTaskComments("42")
+                    todoService.getSections("7025")
                 }
             }
         }
     }
 
     @Test
-    fun `TodoistService createProjectComment`() {
+    fun `TodoistService createSection`() {
         var request: HttpRequestData? = null
         val mockEngine = MockEngine {
             request = it
             respond(
                 content = ByteReadChannel(
                     """{
-                        "content": "Need one bottle of milk",
-                        "id": "2992679862",
-                        "posted_at": "2016-09-22T07:00:00.000000Z",
-                        "project_id": "2995104339",
-                        "task_id": null
+                        "id": "7025",
+                        "project_id": "2203306141",
+                        "order": 1,
+                        "name": "Groceries"
                     }""".trimIndent()
                 ),
                 status = HttpStatusCode.OK,
@@ -131,37 +107,34 @@ class TodoistServiceCommentTest {
         }
 
         usingTodoistService(mockEngine) { todoService ->
-            val commentData = TodoistCommentCreationRequest.Project("2995104339", "Need one bottle of milk")
+            val sectionData = TodoistSectionCreationRequest("Groceries", "2203306141")
 
-            val comment = todoService.createComment(commentData)
-            assertEquals("/v2/comments", request?.url?.encodedPath)
+            val section = todoService.createSection(sectionData)
+            assertEquals("/v2/sections", request?.url?.encodedPath)
             assertEquals("", request?.url?.encodedQuery)
             assertEquals(HttpMethod.Post, request?.method)
-            val expected = TodoistComment(
-                id = "2992679862",
-                taskId = null,
-                projectId = "2995104339",
-                postedAt = "2016-09-22T07:00:00.000000Z",
-                content = "Need one bottle of milk",
-                attachment = null
+            val expected = TodoistSection(
+                id = "7025",
+                projectId = "2203306141",
+                order = 1,
+                name = "Groceries"
             )
-            assertEquals(expected, comment)
+            assertEquals(expected, section)
         }
     }
 
     @Test
-    fun `TodoistService createTaskComment`() {
+    fun `TodoistService createSection with order`() {
         var request: HttpRequestData? = null
         val mockEngine = MockEngine {
             request = it
             respond(
                 content = ByteReadChannel(
                     """{
-                        "content": "Need one bottle of milk",
-                        "id": "2992679862",
-                        "posted_at": "2016-09-22T07:00:00.000000Z",
-                        "project_id": null,
-                        "task_id": "2995104339"
+                        "id": "7025",
+                        "project_id": "2203306141",
+                        "order": 5,
+                        "name": "Groceries"
                     }""".trimIndent()
                 ),
                 status = HttpStatusCode.OK,
@@ -170,26 +143,24 @@ class TodoistServiceCommentTest {
         }
 
         usingTodoistService(mockEngine) { todoService ->
-            val commentData = TodoistCommentCreationRequest.Task("2995104339", "Need one bottle of milk")
+            val sectionData = TodoistSectionCreationRequest("Groceries", "2203306141", 5)
 
-            val comment = todoService.createComment(commentData)
-            assertEquals("/v2/comments", request?.url?.encodedPath)
+            val section = todoService.createSection(sectionData)
+            assertEquals("/v2/sections", request?.url?.encodedPath)
             assertEquals("", request?.url?.encodedQuery)
             assertEquals(HttpMethod.Post, request?.method)
-            val expected = TodoistComment(
-                id = "2992679862",
-                taskId = "2995104339",
-                projectId = null,
-                postedAt = "2016-09-22T07:00:00.000000Z",
-                content = "Need one bottle of milk",
-                attachment = null
+            val expected = TodoistSection(
+                id = "7025",
+                projectId = "2203306141",
+                order = 5,
+                name = "Groceries"
             )
-            assertEquals(expected, comment)
+            assertEquals(expected, section)
         }
     }
 
     @Test
-    fun `TodoistService createComment failure`() {
+    fun `TodoistService createSection failure`() {
         val mockEngine = MockEngine {
             respond(
                 content = ByteReadChannel(""),
@@ -201,15 +172,15 @@ class TodoistServiceCommentTest {
         usingTodoistService(mockEngine) { todoService ->
             assertThrows(ClientRequestException::class.java) {
                 runBlocking {
-                    todoService.createComment(TodoistCommentCreationRequest.Task("42", "Foo"))
+                    todoService.createSection(TodoistSectionCreationRequest("Foo", "7025"))
                 }
             }
         }
     }
 
     @Test
-    fun `TodoistService getComment`() {
-        val testData = commentData[1]
+    fun `TodoistService getSection`() {
+        val testData = sectionData.first()
 
         var request: HttpRequestData? = null
         val mockEngine = MockEngine {
@@ -222,16 +193,16 @@ class TodoistServiceCommentTest {
         }
 
         usingTodoistService(mockEngine) { todoService ->
-            val comment = todoService.getComment("42")
-            assertEquals("/v2/comments/42", request?.url?.encodedPath)
+            val section = todoService.getSection("7025")
+            assertEquals("/v2/sections/7025", request?.url?.encodedPath)
             assertEquals("", request?.url?.encodedQuery)
             assertEquals(HttpMethod.Get, request?.method)
-            assertEquals(testData.expectedEntity, comment)
+            assertEquals(testData.expectedEntity, section)
         }
     }
 
     @Test
-    fun `TodoistService getComment failure`() {
+    fun `TodoistService getSection failure`() {
         val mockEngine = MockEngine {
             respond(
                 content = ByteReadChannel(""),
@@ -243,15 +214,15 @@ class TodoistServiceCommentTest {
         usingTodoistService(mockEngine) { todoService ->
             assertThrows(ClientRequestException::class.java) {
                 runBlocking {
-                    todoService.getComment("2992679862")
+                    todoService.getSection("7025")
                 }
             }
         }
     }
 
     @Test
-    fun `TodoistService updateComment`() {
-        val testData = commentData[1]
+    fun `TodoistService updateSection`() {
+        val testData = sectionData.first()
 
         var request: HttpRequestData? = null
         val mockEngine = MockEngine {
@@ -259,11 +230,10 @@ class TodoistServiceCommentTest {
             respond(
                 content = ByteReadChannel(
                     """{
-                        "content": "Need two bottles of milk",
-                        "id": "2992679863",
-                        "posted_at": "2016-09-22T07:00:00.000000Z",
-                        "project_id": "2995104330",
-                        "task_id": null
+                        "id": "7025",
+                        "project_id": "2203306141",
+                        "order": 1,
+                        "name": "Supermarket"
                     }""".trimIndent()
                 ),
                 status = HttpStatusCode.OK,
@@ -272,20 +242,17 @@ class TodoistServiceCommentTest {
         }
 
         usingTodoistService(mockEngine) { todoService ->
-            val comment = todoService.updateComment(
-                "2992679862",
-                TodoistCommentUpdateRequest(content = "Need two bottles of milk")
-            )
-            assertEquals("/v2/comments/2992679862", request?.url?.encodedPath)
+            val section = todoService.updateSection("7025", TodoistSectionUpdateRequest(name = "Supermarket"))
+            assertEquals("/v2/sections/7025", request?.url?.encodedPath)
             assertEquals("", request?.url?.encodedQuery)
             assertEquals(HttpMethod.Post, request?.method)
-            val expected = (testData.expectedEntity as TodoistComment).copy(content = "Need two bottles of milk")
-            assertEquals(expected, comment)
+            val expected = (testData.expectedEntity as TodoistSection).copy(name = "Supermarket")
+            assertEquals(expected, section)
         }
     }
 
     @Test
-    fun `TodoistService updateComment failure`() {
+    fun `TodoistService updateSection failure`() {
         val mockEngine = MockEngine {
             respond(
                 content = ByteReadChannel(""),
@@ -297,17 +264,14 @@ class TodoistServiceCommentTest {
         usingTodoistService(mockEngine) { todoService ->
             assertThrows(ClientRequestException::class.java) {
                 runBlocking {
-                    todoService.updateComment(
-                        "2992679862",
-                        TodoistCommentUpdateRequest(content = "Need two bottles of milk")
-                    )
+                    todoService.updateSection("7025", TodoistSectionUpdateRequest(name = "Supermarket"))
                 }
             }
         }
     }
 
     @Test
-    fun `TodoistService deleteComment`() {
+    fun `TodoistService deleteSection`() {
         var request: HttpRequestData? = null
         val mockEngine = MockEngine {
             request = it
@@ -319,15 +283,15 @@ class TodoistServiceCommentTest {
         }
 
         usingTodoistService(mockEngine) { todoService ->
-            todoService.deleteComment("2992679862")
-            assertEquals("/v2/comments/2992679862", request?.url?.encodedPath)
+            todoService.deleteSection("2992679862")
+            assertEquals("/v2/sections/2992679862", request?.url?.encodedPath)
             assertEquals("", request?.url?.encodedQuery)
             assertEquals(HttpMethod.Delete, request?.method)
         }
     }
 
     @Test
-    fun `TodoistService deleteComment failure`() {
+    fun `TodoistService deleteSection failure`() {
         val mockEngine = MockEngine {
             respond(
                 content = ByteReadChannel(""),
@@ -339,7 +303,7 @@ class TodoistServiceCommentTest {
         usingTodoistService(mockEngine) { todoService ->
             assertThrows(ClientRequestException::class.java) {
                 runBlocking {
-                    todoService.deleteComment("2992679862")
+                    todoService.deleteSection("2992679862")
                 }
             }
         }

@@ -20,7 +20,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.opatry.todoist.entity
+package net.opatry.todoist.service
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine

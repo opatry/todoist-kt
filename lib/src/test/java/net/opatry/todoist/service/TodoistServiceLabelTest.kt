@@ -20,7 +20,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.opatry.todoist.entity
+package net.opatry.todoist.service
 
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -32,7 +32,10 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.runBlocking
-import net.opatry.todoist.entity.data.projectData
+import net.opatry.todoist.entity.TodoistLabel
+import net.opatry.todoist.entity.TodoistLabelCreationRequest
+import net.opatry.todoist.entity.TodoistLabelUpdateRequest
+import net.opatry.todoist.entity.data.labelData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
@@ -40,11 +43,11 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-class TodoistServiceProjectTest {
+class TodoistServiceLabelTest {
 
     @Test
-    fun `TodoistService getProjects`() {
-        val testData = projectData.first()
+    fun `TodoistService getLabels`() {
+        val testData = labelData.first()
 
         var request: HttpRequestData? = null
         val mockEngine = MockEngine {
@@ -57,16 +60,16 @@ class TodoistServiceProjectTest {
         }
 
         usingTodoistService(mockEngine) { todoService ->
-            val projects = todoService.getProjects()
-            assertEquals("/v2/projects", request?.url?.encodedPath)
+            val labels = todoService.getLabels()
+            assertEquals("/v2/labels", request?.url?.encodedPath)
             assertEquals("", request?.url?.encodedQuery)
             assertEquals(HttpMethod.Get, request?.method)
-            assertEquals(listOf(testData.expectedEntity), projects)
+            assertEquals(listOf(testData.expectedEntity), labels)
         }
     }
 
     @Test
-    fun `TodoistService getProjects failure`() {
+    fun `TodoistService getLabels failure`() {
         val mockEngine = MockEngine {
             respond(
                 content = ByteReadChannel(""),
@@ -78,32 +81,27 @@ class TodoistServiceProjectTest {
         usingTodoistService(mockEngine) { todoService ->
             assertThrows(ClientRequestException::class.java) {
                 runBlocking {
-                    todoService.getProjects()
+                    todoService.getLabels()
                 }
             }
         }
     }
 
     @Test
-    fun `TodoistService createProject`() {
+    fun `TodoistService createLabel`() {
+        val testData = labelData.first()
+
         var request: HttpRequestData? = null
         val mockEngine = MockEngine {
             request = it
             respond(
                 content = ByteReadChannel(
                     """{
-                        "id": "2203306141",
-                        "name": "Shopping List",
-                        "comment_count": 0,
+                        "id": "2156154810",
+                        "name": "Food",
                         "color": "charcoal",
-                        "is_shared": false,
                         "order": 1,
-                        "is_favorite": true,
-                        "is_inbox_project": false,
-                        "is_team_inbox": false,
-                        "view_style": "list",
-                        "url": "https://todoist.com/showProject?id=2203306141",
-                        "parent_id": null
+                        "is_favorite": false
                     }""".trimIndent()
                 ),
                 status = HttpStatusCode.OK,
@@ -112,32 +110,16 @@ class TodoistServiceProjectTest {
         }
 
         usingTodoistService(mockEngine) { todoService ->
-            val projectData = TodoistProjectCreationRequest("Shopping List")
-
-            val project = todoService.createProject(projectData)
-            assertEquals("/v2/projects", request?.url?.encodedPath)
+            val label = todoService.createLabel(TodoistLabelCreationRequest("Foo"))
+            assertEquals("/v2/labels", request?.url?.encodedPath)
             assertEquals("", request?.url?.encodedQuery)
             assertEquals(HttpMethod.Post, request?.method)
-            val expected = TodoistProject(
-                id = "2203306141",
-                name = "Shopping List",
-                commentCount = 0,
-                color = "charcoal",
-                isShared = false,
-                order = 1,
-                isFavorite = true,
-                isInboxProject = false,
-                isTeamInbox = false,
-                viewStyle = TodoistProject.ViewStyle.List,
-                url = "https://todoist.com/showProject?id=2203306141",
-                parentId = null
-            )
-            assertEquals(expected, project)
+            assertEquals(testData.expectedEntity, label)
         }
     }
 
     @Test
-    fun `TodoistService createProject failure`() {
+    fun `TodoistService createLabel failure`() {
         val mockEngine = MockEngine {
             respond(
                 content = ByteReadChannel(""),
@@ -149,74 +131,27 @@ class TodoistServiceProjectTest {
         usingTodoistService(mockEngine) { todoService ->
             assertThrows(ClientRequestException::class.java) {
                 runBlocking {
-                    todoService.createProject(TodoistProjectCreationRequest("Foo"))
+                    todoService.createLabel(TodoistLabelCreationRequest("foo"))
                 }
             }
         }
     }
 
     @Test
-    fun `TodoistService getProject`() {
-        val testData = projectData.first()
+    fun `TodoistService getLabel`() {
+        val testData = labelData.first()
 
-        var request: HttpRequestData? = null
-        val mockEngine = MockEngine {
-            request = it
-            respond(
-                content = ByteReadChannel(testData.jsonPayload),
-                status = HttpStatusCode.OK,
-                headers = headersOf(HttpHeaders.ContentType, "application/json")
-            )
-        }
-
-        usingTodoistService(mockEngine) { todoService ->
-            val project = todoService.getProject("2203306141")
-            assertEquals("/v2/projects/2203306141", request?.url?.encodedPath)
-            assertEquals("", request?.url?.encodedQuery)
-            assertEquals(HttpMethod.Get, request?.method)
-            assertEquals(testData.expectedEntity, project)
-        }
-    }
-
-    @Test
-    fun `TodoistService getProject failure`() {
-        val mockEngine = MockEngine {
-            respond(
-                content = ByteReadChannel(""),
-                status = HttpStatusCode.Forbidden,
-                headers = headersOf(HttpHeaders.ContentType, "application/json")
-            )
-        }
-
-        usingTodoistService(mockEngine) { todoService ->
-            assertThrows(ClientRequestException::class.java) {
-                runBlocking {
-                    todoService.getProject("2203306141")
-                }
-            }
-        }
-    }
-
-    @Test
-    fun `TodoistService updateProject`() {
         var request: HttpRequestData? = null
         val mockEngine = MockEngine {
             request = it
             respond(
                 content = ByteReadChannel(
                     """{
-                        "id": "2203306141",
-                        "name": "Things to buy",
-                        "comment_count": 0,
+                        "id": "2156154810",
+                        "name": "Food",
                         "color": "charcoal",
-                        "is_shared": false,
                         "order": 1,
-                        "is_favorite": false,
-                        "is_inbox_project": false,
-                        "is_team_inbox": false,
-                        "view_style": "list",
-                        "url": "https://todoist.com/showProject?id=2203306141",
-                        "parent_id": null
+                        "is_favorite": false
                     }""".trimIndent()
                 ),
                 status = HttpStatusCode.OK,
@@ -225,30 +160,16 @@ class TodoistServiceProjectTest {
         }
 
         usingTodoistService(mockEngine) { todoService ->
-            val project = todoService.updateProject("2203306141", TodoistProjectUpdateRequest(name = "Things to buy"))
-            assertEquals("/v2/projects/2203306141", request?.url?.encodedPath)
+            val label = todoService.getLabel("2156154810")
+            assertEquals("/v2/labels/2156154810", request?.url?.encodedPath)
             assertEquals("", request?.url?.encodedQuery)
-            assertEquals(HttpMethod.Post, request?.method)
-            val expected = TodoistProject(
-                id = "2203306141",
-                name = "Things to buy",
-                commentCount = 0,
-                color = "charcoal",
-                isShared = false,
-                order = 1,
-                isFavorite = false,
-                isInboxProject = false,
-                isTeamInbox = false,
-                viewStyle = TodoistProject.ViewStyle.List,
-                url = "https://todoist.com/showProject?id=2203306141",
-                parentId = null
-            )
-            assertEquals(expected, project)
+            assertEquals(HttpMethod.Get, request?.method)
+            assertEquals(testData.expectedEntity, label)
         }
     }
 
     @Test
-    fun `TodoistService updateProject failure`() {
+    fun `TodoistService getLabel failure`() {
         val mockEngine = MockEngine {
             respond(
                 content = ByteReadChannel(""),
@@ -260,34 +181,42 @@ class TodoistServiceProjectTest {
         usingTodoistService(mockEngine) { todoService ->
             assertThrows(ClientRequestException::class.java) {
                 runBlocking {
-                    todoService.updateProject("2995104339", TodoistProjectUpdateRequest(name = "Bar"))
+                    todoService.getLabel("42")
                 }
             }
         }
     }
 
     @Test
-    fun `TodoistService deleteProject`() {
+    fun `TodoistService deleteLabel`() {
         var request: HttpRequestData? = null
         val mockEngine = MockEngine {
             request = it
             respond(
-                content = ByteReadChannel(""),
+                content = ByteReadChannel(
+                    """{
+                        "id": "2156154810",
+                        "name": "Drinks",
+                        "color": "charcoal",
+                        "order": 1,
+                        "is_favorite": false
+                    }""".trimIndent()
+                ),
                 status = HttpStatusCode.NoContent,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
         }
 
         usingTodoistService(mockEngine) { todoService ->
-            todoService.deleteProject("2992679862")
-            assertEquals("/v2/projects/2992679862", request?.url?.encodedPath)
+            todoService.deleteLabel("2156154810")
+            assertEquals("/v2/labels/2156154810", request?.url?.encodedPath)
             assertEquals("", request?.url?.encodedQuery)
             assertEquals(HttpMethod.Delete, request?.method)
         }
     }
 
     @Test
-    fun `TodoistService deleteProject failure`() {
+    fun `TodoistService updateLabel failure`() {
         val mockEngine = MockEngine {
             respond(
                 content = ByteReadChannel(""),
@@ -299,7 +228,58 @@ class TodoistServiceProjectTest {
         usingTodoistService(mockEngine) { todoService ->
             assertThrows(ClientRequestException::class.java) {
                 runBlocking {
-                    todoService.deleteProject("2992679862")
+                    todoService.updateLabel("42", TodoistLabelUpdateRequest("toto"))
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `TodoistService updateLabel`() {
+        val testData = labelData.first()
+
+        var request: HttpRequestData? = null
+        val mockEngine = MockEngine {
+            request = it
+            respond(
+                content = ByteReadChannel(
+                    """{
+                        "id": "2156154810",
+                        "name": "Drinks",
+                        "color": "charcoal",
+                        "order": 1,
+                        "is_favorite": false
+                    }""".trimIndent()
+                ),
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
+        }
+
+        usingTodoistService(mockEngine) { todoService ->
+            val label = todoService.updateLabel("2156154810", TodoistLabelUpdateRequest("Drinks"))
+            assertEquals("/v2/labels/2156154810", request?.url?.encodedPath)
+            assertEquals("", request?.url?.encodedQuery)
+            assertEquals(HttpMethod.Post, request?.method)
+            val expected = (testData.expectedEntity as TodoistLabel).copy(name = "Drinks")
+            assertEquals(expected, label)
+        }
+    }
+
+    @Test
+    fun `TodoistService deleteLabel failure`() {
+        val mockEngine = MockEngine {
+            respond(
+                content = ByteReadChannel(""),
+                status = HttpStatusCode.Forbidden,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
+        }
+
+        usingTodoistService(mockEngine) { todoService ->
+            assertThrows(ClientRequestException::class.java) {
+                runBlocking {
+                    todoService.deleteLabel("42")
                 }
             }
         }

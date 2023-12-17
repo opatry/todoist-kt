@@ -20,7 +20,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.opatry.todoist.entity
+package net.opatry.todoist.service
 
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -32,6 +32,9 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.runBlocking
+import net.opatry.todoist.entity.TodoistTask
+import net.opatry.todoist.entity.TodoistTaskCreationRequest
+import net.opatry.todoist.entity.TodoistTaskUpdateRequest
 import net.opatry.todoist.entity.data.EntityTestParam
 import net.opatry.todoist.entity.data.taskData
 import org.junit.Assert.assertEquals

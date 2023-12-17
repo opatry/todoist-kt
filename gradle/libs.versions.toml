@@ -1,0 +1,12 @@
+[versions]
+
+todoistKt = "1.0.0"
+
+kotlin = "1.9.20"
+
+[libraries]
+
+junit4 = "junit:junit:4.13.2"
+
+[plugins]
+jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

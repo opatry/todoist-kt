@@ -20,15 +20,29 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    alias(libs.plugins.jetbrains.kotlin.jvm)
-}
+package net.opatry.todoist.entity
 
-dependencies {
-    api(libs.bundles.ktor)
-    implementation(libs.gson)
+import com.google.gson.annotations.SerializedName
 
-    testImplementation(libs.junit4)
-    testImplementation(libs.ktor.client.mock)
-    testImplementation(libs.kotlinx.coroutines.test)
-}
+/**
+ * Represents a Todoist section.
+ *
+ * @property id Section id
+ * @property projectId ID of the project section belongs to
+ * @property order Section position among other sections from the same project
+ * @property name Section name
+ */
+data class TodoistSection(
+
+    @SerializedName("id")
+    override val id: String,
+
+    @SerializedName("project_id")
+    val projectId: String,
+
+    @SerializedName("order")
+    override val order: Int,
+
+    @SerializedName("name")
+    val name: String,
+) : OrderedEntity

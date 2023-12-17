@@ -20,15 +20,33 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    alias(libs.plugins.jetbrains.kotlin.jvm)
-}
+package net.opatry.todoist.entity
 
-dependencies {
-    api(libs.bundles.ktor)
-    implementation(libs.gson)
+import com.google.gson.annotations.SerializedName
 
-    testImplementation(libs.junit4)
-    testImplementation(libs.ktor.client.mock)
-    testImplementation(libs.kotlinx.coroutines.test)
-}
+/**
+ * Represents a Todoist new section request.
+ *
+ * @property name Name of the project.
+ * @property parentId Parent project ID.
+ * @property color The color of the project icon. Refer to the `name` column in the [Colors](https://developer.todoist.com/guides/#colors) guide for more info.
+ * @property isFavorite Whether the project is a favorite.
+ * @property viewStyle This determines the way the project is displayed within the Todoist clients.
+ */
+data class TodoistProjectCreationRequest(
+
+    @SerializedName("name")
+    val name: String,
+
+    @SerializedName("parent_id")
+    val parentId: String? = null,
+
+    @SerializedName("color")
+    val color: String? = null,
+
+    @SerializedName("is_favorite")
+    val isFavorite: Boolean? = null,
+
+    @SerializedName("view_style")
+    val viewStyle: TodoistProject.ViewStyle? = null,
+)

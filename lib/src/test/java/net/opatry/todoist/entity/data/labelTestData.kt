@@ -20,15 +20,26 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    alias(libs.plugins.jetbrains.kotlin.jvm)
-}
 
-dependencies {
-    api(libs.bundles.ktor)
-    implementation(libs.gson)
+package net.opatry.todoist.entity.data
 
-    testImplementation(libs.junit4)
-    testImplementation(libs.ktor.client.mock)
-    testImplementation(libs.kotlinx.coroutines.test)
-}
+import net.opatry.todoist.entity.TodoistLabel
+
+val labelData = listOf(
+    EntityTestParam.build(
+        """{
+            "id": "2156154810",
+            "name": "Food",
+            "color": "charcoal",
+            "order": 1,
+            "is_favorite": false
+        }""".trimIndent(),
+        TodoistLabel(
+            id = "2156154810",
+            name = "Food",
+            color = "charcoal",
+            order = 1,
+            isFavorite = false
+        )
+    ),
+)

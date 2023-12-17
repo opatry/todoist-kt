@@ -20,15 +20,17 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    alias(libs.plugins.jetbrains.kotlin.jvm)
-}
+package net.opatry.todoist.entity
 
-dependencies {
-    api(libs.bundles.ktor)
-    implementation(libs.gson)
+import com.google.gson.annotations.SerializedName
 
-    testImplementation(libs.junit4)
-    testImplementation(libs.ktor.client.mock)
-    testImplementation(libs.kotlinx.coroutines.test)
-}
+/**
+ * Represents a Todoist update comment request.
+ *
+ * @property content New content for the comment. This value may contain markdown-formatted text and hyperlinks. Details on markdown support can be found in the [Text Formatting article](https://todoist.com/help/articles/how-to-format-text-e5dHw9) in the Help Center.
+ */
+data class TodoistCommentUpdateRequest(
+
+    @SerializedName("content")
+    val content: String,
+)

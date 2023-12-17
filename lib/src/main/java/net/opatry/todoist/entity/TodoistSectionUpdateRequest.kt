@@ -20,15 +20,17 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    alias(libs.plugins.jetbrains.kotlin.jvm)
-}
+package net.opatry.todoist.entity
 
-dependencies {
-    api(libs.bundles.ktor)
-    implementation(libs.gson)
+import com.google.gson.annotations.SerializedName
 
-    testImplementation(libs.junit4)
-    testImplementation(libs.ktor.client.mock)
-    testImplementation(libs.kotlinx.coroutines.test)
-}
+/**
+ * Represents a Todoist update section request.
+ *
+ * @property name Section name
+ */
+data class TodoistSectionUpdateRequest(
+
+    @SerializedName("name")
+    val name: String,
+)

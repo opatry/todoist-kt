@@ -20,15 +20,29 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    alias(libs.plugins.jetbrains.kotlin.jvm)
-}
+package net.opatry.todoist.entity
 
-dependencies {
-    api(libs.bundles.ktor)
-    implementation(libs.gson)
+import com.google.gson.annotations.SerializedName
 
-    testImplementation(libs.junit4)
-    testImplementation(libs.ktor.client.mock)
-    testImplementation(libs.kotlinx.coroutines.test)
-}
+/**
+ * Represents a Todoist new label request.
+ *
+ * @property name Name of the label.
+ * @property order Label order.
+ * @property color The color of the label icon. Refer to the `name` column in the [Colors](https://developer.todoist.com/guides/#colors) guide for more info.
+ * @property isFavorite Whether the label is a favorite.
+ */
+data class TodoistLabelCreationRequest(
+
+    @SerializedName("name")
+    val name: String,
+
+    @SerializedName("order")
+    val order: String? = null,
+
+    @SerializedName("color")
+    val color: String? = null,
+
+    @SerializedName("is_favorite")
+    val isFavorite: Boolean? = null,
+)

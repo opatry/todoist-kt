@@ -20,15 +20,25 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    alias(libs.plugins.jetbrains.kotlin.jvm)
-}
+package net.opatry.todoist.entity
 
-dependencies {
-    api(libs.bundles.ktor)
-    implementation(libs.gson)
+import com.google.gson.annotations.SerializedName
 
-    testImplementation(libs.junit4)
-    testImplementation(libs.ktor.client.mock)
-    testImplementation(libs.kotlinx.coroutines.test)
-}
+/**
+ * Represents a Todoist new section request.
+ *
+ * @property name Section name
+ * @property projectId    Project ID this section should belong to
+ * @property order Order among other sections in a project
+ */
+data class TodoistSectionCreationRequest(
+
+    @SerializedName("name")
+    val name: String,
+
+    @SerializedName("project_id")
+    val projectId: String,
+
+    @SerializedName("order")
+    val order: Int? = null,
+)

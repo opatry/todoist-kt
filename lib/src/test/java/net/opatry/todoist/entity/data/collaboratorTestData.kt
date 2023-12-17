@@ -20,15 +20,22 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    alias(libs.plugins.jetbrains.kotlin.jvm)
-}
 
-dependencies {
-    api(libs.bundles.ktor)
-    implementation(libs.gson)
+package net.opatry.todoist.entity.data
 
-    testImplementation(libs.junit4)
-    testImplementation(libs.ktor.client.mock)
-    testImplementation(libs.kotlinx.coroutines.test)
-}
+import net.opatry.todoist.entity.TodoistCollaborator
+
+val collaboratorData = listOf(
+    EntityTestParam.build(
+        """{
+            "id": "2671362",
+            "name": "Alice",
+            "email": "alice@example.com"
+        }""".trimIndent(),
+        TodoistCollaborator(
+            id = "2671362",
+            name = "Alice",
+            email = "alice@example.com"
+        )
+    ),
+)

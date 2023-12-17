@@ -20,15 +20,40 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    alias(libs.plugins.jetbrains.kotlin.jvm)
-}
 
-dependencies {
-    api(libs.bundles.ktor)
-    implementation(libs.gson)
+package net.opatry.todoist.entity.data
 
-    testImplementation(libs.junit4)
-    testImplementation(libs.ktor.client.mock)
-    testImplementation(libs.kotlinx.coroutines.test)
-}
+import net.opatry.todoist.entity.TodoistProject
+
+val projectData = listOf(
+    EntityTestParam.build(
+        """{
+            "id": "220474322",
+            "name": "Inbox",
+            "comment_count": 10,
+            "order": 0,
+            "color": "grey",
+            "is_shared": false,
+            "is_favorite": false,
+            "is_inbox_project": true,
+            "is_team_inbox": false,
+            "view_style": "list",
+            "url": "https://todoist.com/showProject?id=220474322",
+            "parent_id": null
+        }""".trimIndent(),
+        TodoistProject(
+            id = "220474322",
+            name = "Inbox",
+            commentCount = 10,
+            order = 0,
+            color = "grey",
+            isShared = false,
+            isFavorite = false,
+            isInboxProject = true,
+            isTeamInbox = false,
+            viewStyle = TodoistProject.ViewStyle.List,
+            url = "https://todoist.com/showProject?id=220474322",
+            parentId = null,
+        )
+    ),
+)

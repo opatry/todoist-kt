@@ -20,15 +20,17 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    alias(libs.plugins.jetbrains.kotlin.jvm)
-}
 
-dependencies {
-    api(libs.bundles.ktor)
-    implementation(libs.gson)
+package net.opatry.todoist.entity.data
 
-    testImplementation(libs.junit4)
-    testImplementation(libs.ktor.client.mock)
-    testImplementation(libs.kotlinx.coroutines.test)
+data class EntityTestParam(val jsonPayload: String, val entityClass: Class<*>, val expectedEntity: Any) {
+    override fun toString(): String {
+        return "${entityClass.simpleName} ${jsonPayload.replace("[\\w]+", " ").take(40)}…"
+    }
+
+    companion object {
+        fun <T : Any> build(jsonPayload: String, expectedEntity: T): EntityTestParam {
+            return EntityTestParam(jsonPayload, expectedEntity::class.java, expectedEntity)
+        }
+    }
 }

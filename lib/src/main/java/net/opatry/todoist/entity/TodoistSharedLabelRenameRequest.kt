@@ -20,15 +20,21 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    alias(libs.plugins.jetbrains.kotlin.jvm)
-}
+package net.opatry.todoist.entity
 
-dependencies {
-    api(libs.bundles.ktor)
-    implementation(libs.gson)
+import com.google.gson.annotations.SerializedName
 
-    testImplementation(libs.junit4)
-    testImplementation(libs.ktor.client.mock)
-    testImplementation(libs.kotlinx.coroutines.test)
-}
+/**
+ * Represents a Todoist rename shared label request.
+ *
+ * @property name The name of the existing label to rename.
+ * @property newName The new name for the label.
+ */
+data class TodoistSharedLabelRenameRequest(
+
+    @SerializedName("name")
+    val name: String,
+
+    @SerializedName("new_name")
+    val newName: String,
+)

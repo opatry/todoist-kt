@@ -20,15 +20,28 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    alias(libs.plugins.jetbrains.kotlin.jvm)
-}
+package net.opatry.todoist.entity
 
-dependencies {
-    api(libs.bundles.ktor)
-    implementation(libs.gson)
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.gson.gson
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runTest
+import net.opatry.todoist.HttpTodoistService
+import net.opatry.todoist.TodoistService
 
-    testImplementation(libs.junit4)
-    testImplementation(libs.ktor.client.mock)
-    testImplementation(libs.kotlinx.coroutines.test)
+fun usingTodoistService(
+    httpClientEngine: HttpClientEngine,
+    test: suspend TestScope.(service: TodoistService) -> Unit
+) {
+    val httpClient = HttpClient(httpClientEngine) {
+        install(ContentNegotiation) {
+            gson()
+        }
+    }
+
+    runTest {
+        test(HttpTodoistService(httpClient))
+    }
 }

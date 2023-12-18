@@ -33,7 +33,9 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import net.opatry.todoist.entity.TodoistSyncResult
+import net.opatry.todoist.sync.TodoistSyncCommand
+import net.opatry.todoist.sync.TodoistSyncResult
+import net.opatry.todoist.sync.entity.TodoistSyncProjectInfo
 
 interface TodoistSyncService {
     /**
@@ -53,7 +55,7 @@ interface TodoistSyncService {
      * `notification_settings`, `user_plan_limits`, `completed_info`, `stats`.
      * You may use all to include all the resource types.
      * Resources can also be excluded by prefixing a `-` prior to the name, for example, `-projects`
-     *
+     * @param commands An array of Command objects. Each command will be processed in the specified order.
      *
      * In order to fetch both types of reminders you must include both resource types in your request, for example: `resource_types=["reminders", "reminders_location"]`.
      *
@@ -61,7 +63,19 @@ interface TodoistSyncService {
      *
      * @see [TodoistSyncResult.syncToken]
      */
-    suspend fun sync(syncToken: String, resourceTypes: List<String>): TodoistSyncResult
+    suspend fun sync(syncToken: String, resourceTypes: List<String>, commands: List<TodoistSyncCommand>? = null): TodoistSyncResult
+
+    /**
+     * This function is used to extract detailed information about the project, including all the notes.
+     *
+     * It is especially important, because a full sync only returns up to 10 notes for each project. If a client requires more, they can be downloaded using this endpoint.
+     *
+     * It returns an object with the [TodoistSyncProjectInfo.project], and optionally the [TodoistSyncProjectInfo.notes] attributes.
+     *
+     * @param projectId
+     * @param allData Whether to return the notes of the project (the default is `true`).
+     */
+    suspend fun getProjectInfo(projectId: String, allData: Boolean? = true): TodoistSyncProjectInfo
 }
 
 class HttpTodoistSyncService(private val httpClient: HttpClient) : TodoistSyncService {
@@ -98,15 +112,24 @@ class HttpTodoistSyncService(private val httpClient: HttpClient) : TodoistSyncSe
         }
     }
 
-    override suspend fun sync(syncToken: String, resourceTypes: List<String>): TodoistSyncResult {
-        return httpClient.getOrThrow(
+    override suspend fun sync(
+        syncToken: String,
+        resourceTypes: List<String>,
+        commands: List<TodoistSyncCommand>?
+    ): TodoistSyncResult {
+        return httpClient.postOrThrow(
             "v9/sync",
-            mapOf(
-                "sync_token" to syncToken,
+            buildMap {
+                put("sync_token", syncToken)
                 // FIXME in doc, it's mentioned resource_types='["foo", "bar"]' with encapsulating single quotes but this doesn't work
                 // TODO Obj to Json with Gson should do the trick
-                "resource_types" to resourceTypes.joinToString(prefix = "[", postfix = "]") { "\"$it\"" },
-            )
+                put("resource_types", resourceTypes.joinToString(prefix = "[", postfix = "]") { "\"$it\"" })
+                commands?.let { put("commands", commands) }
+            }
         )
+    }
+
+    override suspend fun getProjectInfo(projectId: String, allData: Boolean?): TodoistSyncProjectInfo {
+        return httpClient.postOrThrow("v9/projects/get", mapOf("project_id" to projectId))
     }
 }

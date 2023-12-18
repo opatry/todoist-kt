@@ -20,18 +20,33 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.opatry.todoist.entity.sync
+package net.opatry.todoist.sync
 
 import com.google.gson.annotations.SerializedName
 
-/**
- *  21 Project not found: The project has been deleted or does not exist (the command should not be retried).
- *  22 Item not found: The task has been deleted or does not exist (the command should not be retried).
- * 411 User deleted: The user account has been deleted (the command should not be retried).
- */
-data class TodoistSyncError(
-    @SerializedName("error_code")
-    val errorCode: Int,
-    @SerializedName("error")
-    val error: String,
-)
+sealed class TodoistSyncStatus {
+    data object Ok : TodoistSyncStatus()
+
+    /**
+     *  21 Project not found: The project has been deleted or does not exist (the command should not be retried).
+     *  22 Item not found: The task has been deleted or does not exist (the command should not be retried).
+     * 411 User deleted: The user account has been deleted (the command should not be retried).
+     */
+    data class Error(
+
+        @SerializedName("error_code")
+        val errorCode: Int,
+
+        @SerializedName("error")
+        val error: String,
+
+        @SerializedName("error_tag")
+        val errorTag: String? = null, // undocumented
+
+        @SerializedName("http_code")
+        val httpCode: Int? = null, // undocumented
+
+        @SerializedName("error_extra")
+        val errorExtra: Any? = null, // undocumented
+    ) : TodoistSyncStatus()
+}

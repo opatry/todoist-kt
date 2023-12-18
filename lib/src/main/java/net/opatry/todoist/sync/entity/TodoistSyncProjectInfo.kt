@@ -20,26 +20,15 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package net.opatry.todoist.entity.sync
+package net.opatry.todoist.sync.entity
 
 import com.google.gson.annotations.SerializedName
 
-/**
- * @property projects
- * @property fullSync
- * @property tempIdMapping
- * @property syncStatus
- * @property syncToken
- */
-data class TodoistSyncResult(
-    @SerializedName("projects")
-    val projects: List<TodoistProject>,
-    @SerializedName("full_sync")
-    val fullSync: Boolean,
-    @SerializedName("temp_id_mapping")
-    val tempIdMapping: Map<String, Int>, // temporary ID (like UUID) to Entity id
-    @SerializedName("sync_status")
-    val syncStatus: Map<String, String>, // request UUID to status label ("ok")
-    @SerializedName("sync_token")
-    val syncToken: String,
+data class TodoistSyncProjectInfo(
+
+    @SerializedName("project")
+    val project: TodoistSyncProject,
+
+    @SerializedName("notes")
+    val notes: List<TodoistSyncProjectNotes>? = null,
 )

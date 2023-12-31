@@ -2,11 +2,12 @@
 todoistKt = "1.0.0"
 
 kotlin = "1.9.20"
+kotlinx-coroutines = "1.7.3"
 
 ktor = "2.2.3"
 
 [libraries]
-kotlinx-coroutines-test = "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3"
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }

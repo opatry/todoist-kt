@@ -9,6 +9,8 @@ ktor = "2.2.3"
 [libraries]
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 
+ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
+ktor-server-netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
@@ -22,7 +24,8 @@ gson = "com.google.code.gson:gson:2.10.1"
 junit4 = "junit:junit:4.13.2"
 
 [bundles]
-ktor = [ "ktor-client-core", "ktor-client-auth", "ktor-client-cio", "ktor-client-content-negotiation", "ktor-client-logging", "ktor-serialization-gson"]
+ktor-server = [ "ktor-server-core", "ktor-server-netty" ]
+ktor-client = [ "ktor-client-core", "ktor-client-auth", "ktor-client-cio", "ktor-client-content-negotiation", "ktor-client-logging", "ktor-serialization-gson"]
 
 [plugins]
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

@@ -25,7 +25,8 @@ plugins {
 }
 
 dependencies {
-    api(libs.bundles.ktor)
+    api(libs.bundles.ktor.client)
+    implementation(libs.bundles.ktor.server)
     implementation(libs.gson)
 
     testImplementation(libs.junit4)

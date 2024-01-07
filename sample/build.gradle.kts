@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Olivier Patry
+ * Copyright (c) 2024 Olivier Patry
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the "Software"),
@@ -20,7 +20,10 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-rootProject.name = "todoist-kt"
+plugins {
+    alias(libs.plugins.jetbrains.kotlin.jvm)
+}
 
-include(":lib")
-include(":sample")
+dependencies {
+    implementation(project(":lib"))
+}

@@ -47,8 +47,6 @@ import io.ktor.server.netty.Netty
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import net.opatry.todoist.TodoistServiceAuthenticator.OAuthToken.TokenType.Bearer
 import net.opatry.todoist.TodoistServiceAuthenticator.OAuthToken.TokenType.Mac
 import net.opatry.todoist.TodoistServiceAuthenticator.Permission.DataDelete
@@ -106,14 +104,14 @@ interface TodoistServiceAuthenticator {
     }
 
     /**
-     * @param permissions Permission scope. The currently available scopes are [Permission.TasksWrite], [Permission.TasksRead]
+     * @param permissions List of permissions that you would like the users to grant to your application.
      * @param requestUserAuthorization The URL to which to request user authorization before direction
      *
      * @return auth code
      *
      * @see Permission
      */
-    suspend fun authorize(permissions: List<Permission>, requestUserAuthorization: suspend (url: String) -> Unit): String
+    suspend fun authorize(permissions: List<Permission>, requestUserAuthorization: (url: String) -> Unit): String
 
     /**
      * @param code The code obtained through [authorize].
@@ -152,7 +150,7 @@ class HttpTodoistServiceAuthenticator(private val config: ApplicationConfig) : T
         }
     }
 
-    override suspend fun authorize(permissions: List<TodoistServiceAuthenticator.Permission>, requestUserAuthorization: suspend (url: String) -> Unit): String {
+    override suspend fun authorize(permissions: List<TodoistServiceAuthenticator.Permission>, requestUserAuthorization: (url: String) -> Unit): String {
         val uuid = UUID.randomUUID()
         val params = mapOf(
             "client_id" to config.clientId,
@@ -174,9 +172,8 @@ class HttpTodoistServiceAuthenticator(private val config: ApplicationConfig) : T
                         get(url.fullPath.takeIf(String::isNotEmpty) ?: "/") {
                             val queryParams = call.request.queryParameters
                                 try {
-                                    queryParams["error"]?.let { error ->
-                                        error("error=$error")
-                                    }
+                                    queryParams["error"]?.let(::error)
+
                                     require(uuid == UUID.fromString(requireNotNull(queryParams["state"])))
                                     val authCode = requireNotNull(queryParams["code"])
                                     call.respond(HttpStatusCode.OK)
@@ -189,9 +186,7 @@ class HttpTodoistServiceAuthenticator(private val config: ApplicationConfig) : T
                     }
                 }.start(wait = false)
 
-                CoroutineScope(continuation.context).launch {
-                    requestUserAuthorization("$TODOIST_ROOT_URL/oauth/authorize$params")
-                }
+                requestUserAuthorization("$TODOIST_ROOT_URL/oauth/authorize$params")
             }
         } finally {
             server?.stop()

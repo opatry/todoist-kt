@@ -35,20 +35,22 @@ import io.ktor.client.request.post
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.Parameters
 import io.ktor.http.Url
 import io.ktor.http.contentType
 import io.ktor.http.fullPath
 import io.ktor.http.isSuccess
 import io.ktor.serialization.gson.gson
 import io.ktor.server.application.call
-import io.ktor.server.engine.ApplicationEngine
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.first
 import net.opatry.todoist.TodoistServiceAuthenticator.OAuthToken.TokenType.Bearer
 import net.opatry.todoist.TodoistServiceAuthenticator.OAuthToken.TokenType.Mac
 import net.opatry.todoist.TodoistServiceAuthenticator.Permission.DataDelete
@@ -57,8 +59,6 @@ import net.opatry.todoist.TodoistServiceAuthenticator.Permission.DataReadWrite
 import net.opatry.todoist.TodoistServiceAuthenticator.Permission.ProjectDelete
 import net.opatry.todoist.TodoistServiceAuthenticator.Permission.TaskAdd
 import java.util.*
-import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 
 interface TodoistServiceAuthenticator {
 
@@ -106,14 +106,14 @@ interface TodoistServiceAuthenticator {
     }
 
     /**
-     * @param permissions Permission scope. The currently available scopes are [Permission.TasksWrite], [Permission.TasksRead]
+     * @param permissions List of permissions that you would like the users to grant to your application.
      * @param requestUserAuthorization The URL to which to request user authorization before direction
      *
      * @return auth code
      *
      * @see Permission
      */
-    suspend fun authorize(permissions: List<Permission>, requestUserAuthorization: suspend (url: String) -> Unit): String
+    suspend fun authorize(permissions: List<Permission>, requestUserAuthorization: (url: String) -> Unit): String
 
     /**
      * @param code The code obtained through [authorize].
@@ -152,7 +152,7 @@ class HttpTodoistServiceAuthenticator(private val config: ApplicationConfig) : T
         }
     }
 
-    override suspend fun authorize(permissions: List<TodoistServiceAuthenticator.Permission>, requestUserAuthorization: suspend (url: String) -> Unit): String {
+    override suspend fun authorize(permissions: List<TodoistServiceAuthenticator.Permission>, requestUserAuthorization: (url: String) -> Unit): String {
         val uuid = UUID.randomUUID()
         val params = mapOf(
             "client_id" to config.clientId,
@@ -164,39 +164,38 @@ class HttpTodoistServiceAuthenticator(private val config: ApplicationConfig) : T
             "${it.key}=${it.value}"
         }
 
-        var server: ApplicationEngine? = null
-        return try {
-            suspendCoroutine { continuation ->
-                // FIXME calling several times this in parallel with fail
-                val url = Url(config.redirectUrl)
-                server = embeddedServer(Netty, port = url.port, host = url.host) {
-                    routing {
-                        get(url.fullPath.takeIf(String::isNotEmpty) ?: "/") {
-                            val queryParams = call.request.queryParameters
-                                try {
-                                    queryParams["error"]?.let { error ->
-                                        error("error=$error")
-                                    }
-                                    require(uuid == UUID.fromString(requireNotNull(queryParams["state"])))
-                                    val authCode = requireNotNull(queryParams["code"])
-                                    call.respond(HttpStatusCode.OK)
-                                    continuation.resumeWith(Result.success(authCode))
-                                } catch (e: Exception) {
-                                    call.respond(HttpStatusCode.BadRequest)
-                                    continuation.resumeWithException(e)
-                                }
+        return callbackFlow {
+            val url = Url(config.redirectUrl)
+            val server = embeddedServer(Netty, port = url.port, host = url.host) {
+                routing {
+                    get(url.fullPath.takeIf(String::isNotEmpty) ?: "/") {
+                        fun Parameters.require(key: String): String = requireNotNull(get(key)) { "Expected '$key' query parameter not available." }
+
+                        val queryParams = call.request.queryParameters
+                        try {
+                            // throw if any error query parameter if provided
+                            queryParams["error"]?.let(::error)
+
+                            val state = queryParams.require("state")
+                            require(uuid == UUID.fromString(state)) { "Mismatch between expected & provided state ($state)." }
+                            val authCode = queryParams.require("code")
+                            val status = HttpStatusCode.OK
+                            call.respond(status, "$status: Authorization accepted.")
+                            send(authCode)
+                            close(null)
+                        } catch (e: Exception) {
+                            val status = HttpStatusCode.BadRequest
+                            call.respond(status, "$status: ${e.message}")
+                            close(e)
                         }
                     }
-                }.start(wait = false)
-
-                CoroutineScope(continuation.context).launch {
-                    requestUserAuthorization("$TODOIST_ROOT_URL/oauth/authorize$params")
                 }
-            }
-        } finally {
-            server?.stop()
-            server = null
-        }
+            }.start(wait = false)
+            // FIXME ensure server is started before
+            delay(150)
+            requestUserAuthorization("$TODOIST_ROOT_URL/oauth/authorize$params")
+            awaitClose(server::stop)
+        }.first()
     }
 
     override suspend fun getToken(code: String): TodoistServiceAuthenticator.OAuthToken {

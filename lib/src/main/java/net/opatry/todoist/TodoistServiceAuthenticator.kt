@@ -41,6 +41,7 @@ import io.ktor.http.contentType
 import io.ktor.http.fullPath
 import io.ktor.http.isSuccess
 import io.ktor.serialization.gson.gson
+import io.ktor.server.application.ApplicationStarted
 import io.ktor.server.application.call
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
@@ -48,7 +49,6 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 import net.opatry.todoist.TodoistServiceAuthenticator.OAuthToken.TokenType.Bearer
@@ -190,10 +190,11 @@ class HttpTodoistServiceAuthenticator(private val config: ApplicationConfig) : T
                         }
                     }
                 }
-            }.start(wait = false)
-            // FIXME ensure server is started before
-            delay(150)
-            requestUserAuthorization("$TODOIST_ROOT_URL/oauth/authorize$params")
+            }
+            server.environment.monitor.subscribe(ApplicationStarted) {
+                requestUserAuthorization("$TODOIST_ROOT_URL/oauth/authorize$params")
+            }
+            server.start(wait = false)
             awaitClose(server::stop)
         }.first()
     }
